@@ -92,11 +92,24 @@ class LoopScene(InteractiveScene):
 
 class StateThePuzzle(LoopScene):
     def construct(self):
+        # Ambiently animate to various different loops
+        def true_find_square(loop_func, trg_angle=90 * DEG, cost_tol=1e-2, max_tries=8):
+            ic = np.arange(0, 1, 0.25)
+            min_params = ic
+            min_cost = np.inf
+            for x in range(max_tries):
+                params, cost = find_rectangle(loop_func, target_angle=trg_angle, n_refinements=3, return_cost=True)
+                if cost < min_cost:
+                    min_params = params
+                    min_cost = cost
+                ic = np.random.random(4)
+            return min_params
+
         # Show the loop
         loop = get_example_loop(4)
         loop.set_height(7)
         loop.move_to(2 * RIGHT)
-        curve_words = Text("Closed\nContinuous\nCurve", alignment="LEFT", font_size=72)
+        curve_words = TexText(R"\begin{flushleft}Curva\\Cerrada\\Continua\end{flushleft}", font_size=72)
         curve_words.to_edge(LEFT)
 
         self.play(
@@ -113,7 +126,7 @@ class StateThePuzzle(LoopScene):
         square_params = find_rectangle(loop_func, target_angle=90 * DEG)
 
         polygon = self.get_dot_polygon(dots, stroke_color=YELLOW, stroke_width=5)
-        inscribed_words = TexText(R"``Inscribed\\Square''", font_size=72)
+        inscribed_words = TexText(R"``Cuadrado\\Inscrito''", font_size=72)
         inscribed_words.to_edge(LEFT)
 
         self.add(dots)
@@ -128,12 +141,32 @@ class StateThePuzzle(LoopScene):
         self.wait()
 
         # Alternate squares
-        new_square_params = [
-            [0.519, 0.308, 0.277, 0.177],
-            [0.444, 0.105, 0.877, 0.650],
-            [0.037, 0.739, 0.468, 0.372],
-        ]
         dots.suspend_updating()
+
+       
+        # Used to understand Grant's find_rectangle and true_find_square functions
+
+        # Generate 4 different square parameters by using true_find_square
+        # Each call might find a different square since it uses random starting points
+        # print("Starting square calculation")
+        # new_square_params = [
+        #     find_rectangle(loop_func, np.random.random(4), target_angle=90 * DEG) 
+        #     for _ in range(4)
+        # ]
+        # print(np.round(new_square_params,2))
+        #
+        # print("Benchmarking Find Square")
+        # new_square_params = [
+        #         true_find_square(loop_func,trg_angle=90*DEG)
+        #         for _ in range(4)
+        #         ]
+        # print("finished")
+
+
+        new_square_params = [[0.98, 0.4,  0.3 ,0.16],
+                             [0.85, 0.7,  0.39,0.05],]
+        
+        # Now animate through each set of square parameters
         for new_params in new_square_params:
             new_dots = dots.copy()
             new_dots.set_opacity(0)
@@ -141,15 +174,25 @@ class StateThePuzzle(LoopScene):
                 dot.move_to(loop_func(p))
 
             dots.set_opacity(0)
-            self.play(Transform(dots, new_dots), run_time=2)
+            self.play(Transform(dots, new_dots), run_time=0.7)
             dots.set_opacity(1)
-            self.wait()
+            self.wait(0.3)
 
         # Ask question
-        title = Text("Open Question", font_size=60)
+        title = TexText("Pregunta Abierta", font_size=60)
         title.add(Underline(title))
         title.set_color(BLUE)
+
         question = Text("Do all closed\ncontinuous curves\nhave an inscribed\nsquare?", alignment="LEFT")
+        question = Text("¿Todas las curvas\n continuas tienen\n un cuadrado\n inscrito?", alignment="LEFT")
+
+        # TexText didn't work because i cant call on a substring of the text.
+
+        # question = TexText(
+        #     R"\begin{flushleft}¿Todas las curvas\\continuas tienen\\un cuadrado\\inscrito?\end{flushleft}",
+        #     font_size=60
+        # )
+
         question.next_to(title, DOWN)
         question.align_to(title[0], LEFT)
         question_group = VGroup(title, question)
@@ -161,25 +204,13 @@ class StateThePuzzle(LoopScene):
         )
         self.wait()
 
-        # Ambiently animate to various different loops
-        def true_find_square(loop_func, trg_angle=90 * DEG, cost_tol=1e-2, max_tries=8):
-            ic = np.arange(0, 1, 0.25)
-            min_params = ic
-            min_cost = np.inf
-            for x in range(max_tries):
-                params, cost = find_rectangle(loop_func, target_angle=trg_angle, n_refinements=3, return_cost=True)
-                if cost < min_cost:
-                    min_params = params
-                    min_cost = cost
-                ic = np.random.random(4)
-            return min_params
 
         new_loops = [
             get_example_loop(1),
-            get_example_loop(2),
+            get_example_loop(4),
             Tex(R"\pi").family_members_with_points()[0],
             Tex(R"\epsilon").family_members_with_points()[0],
-            get_example_loop(1),
+            get_example_loop(4),
         ]
         og_loop = loop.copy()
         for new_loop in new_loops:
@@ -201,15 +232,18 @@ class StateThePuzzle(LoopScene):
                 run_time=1
             )
             self.add(dots, polygon)
-            for _ in range(5):
+            for _ in range(1):
                 quad_tracker.set_value(find_rectangle(loop_func, np.random.random(4), target_angle=90 * DEG))
                 self.wait(0.5)
 
         # Change question to rectangle
-        square_word = question["square"]
+        # Translated to spanish
+        square_word = question["cuadrado"]
+        # Moving the "?" is not needed as in spanish "cuadrado is not the last word"
         q_mark = question["?"]
-        rect_word = Text("rectangle")
+        rect_word = Text("rectángulo")
         rect_word.move_to(square_word, LEFT)
+        rect_word.shift(DOWN*0.05)
         rect_word.set_color(BLUE)
         red_line = Line(LEFT, RIGHT)
         red_line.replace(square_word, 0)
@@ -220,9 +254,10 @@ class StateThePuzzle(LoopScene):
             ShowCreation(red_line)
         )
         self.play(
-            VGroup(square_word, red_line).animate.shift(0.75 * DOWN),
+            VGroup(square_word, red_line).animate.shift(1.25 * DOWN),
             Write(rect_word),
-            q_mark.animate.next_to(rect_word, RIGHT, SMALL_BUFF, aligned_edge=UP),
+            # moving ? not needed
+            # q_mark.animate.next_to(rect_word, RIGHT, SMALL_BUFF, aligned_edge=UP),
         )
         self.wait()
 
@@ -242,17 +277,103 @@ class StateThePuzzle(LoopScene):
         self.wait()
         dots.resume_updating()
 
+        # Beware: Takes ~1h to render 
+
+        # More ambient transitioning
+        # for new_loop in [og_loop, *new_loops[1:3]]:
+        #     self.play(
+        #         Transform(loop, new_loop),
+        #         UpdateFromFunc(
+        #             quad_tracker,
+        #             lambda m: m.set_value(true_find_square(loop_func, 60 * DEG))
+        #         ),
+        #         run_time=5
+        #     )
+        #     self.wait()
+
+
+
+# To render only the Scene of the true_find_square.
+
+
+class OnlySquare(LoopScene):
+    def construct(self):
+        # Ambiently animate to various different loops
+        def true_find_square(loop_func, trg_angle=90 * DEG, cost_tol=1e-2, max_tries=8):
+            ic = np.arange(0, 1, 0.25)
+            min_params = ic
+            min_cost = np.inf
+            for x in range(max_tries):
+                params, cost = find_rectangle(loop_func, target_angle=trg_angle, n_refinements=3, return_cost=True)
+                if cost < min_cost:
+                    min_params = params
+                    min_cost = cost
+                ic = np.random.random(4)
+            return min_params
+
+        # Show the loop
+        loop = get_example_loop(4)
+        loop.set_height(7)
+        loop.move_to(2 * RIGHT)
+
+        # Show four points going to a square
+        loop.insert_n_curves(50)
+        loop_func = loop.quick_point_from_proportion
+        quad_tracker = ValueTracker([0, 0, 0, 0])
+        dots = self.get_movable_quad(quad_tracker, loop_func, colors=color_gradient([RED, PINK], 4), radius=0.075)
+        square_params = find_rectangle(loop_func, target_angle=90 * DEG)
+
+        polygon = self.get_dot_polygon(dots, stroke_color=YELLOW, stroke_width=5)
+
+        self.add(polygon, loop)
+        self.play(ShowCreation(polygon, suspend_mobject_updating=True))
+        self.wait()
+
+        # Alternate squares
+        dots.suspend_updating()
+
+
+        new_loops = [
+            get_example_loop(1),
+            get_example_loop(4),
+            Tex(R"\pi").family_members_with_points()[0],
+            Tex(R"\epsilon").family_members_with_points()[0],
+            get_example_loop(4),
+        ]
+        og_loop = loop.copy()
+        for new_loop in new_loops:
+            new_loop.insert_n_curves(50)
+            new_loop.match_style(loop)
+            new_loop.match_height(loop)
+            new_loop.move_to(loop)
+
+        dots.resume_updating()
+        self.add(dots, polygon)
+
+        rect_params = find_rectangle(loop_func, target_angle=90 * DEG)
+        self.wait()
+
+
+        # Beware: Takes ~1h to render 
+
         # More ambient transitioning
         for new_loop in [og_loop, *new_loops[1:3]]:
+            print("Computing squares!")
             self.play(
                 Transform(loop, new_loop),
                 UpdateFromFunc(
                     quad_tracker,
-                    lambda m: m.set_value(true_find_square(loop_func, 60 * DEG))
+                    lambda m: m.set_value(true_find_square(loop_func, 90 * DEG))
                 ),
                 run_time=5
             )
             self.wait()
+
+
+
+
+
+
 
 
 class ReframeToPairsOfPoints(LoopScene):

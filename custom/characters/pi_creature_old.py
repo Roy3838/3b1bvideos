@@ -94,23 +94,17 @@ class PiCreature(SVGMobject):
             return os.path.join(folder, "plain.svg")
 
     def init_structure(self):
-        # Get submobjects from the SVG
+        # Figma exports with superfluous parts, so this
+        # hardcodes how to extract what we want.
         parts = self.submobjects
-        
-        # In the SVG, parts are ordered as:
-        # 0,1: eye backgrounds (white)
-        # 2,3: pupils
-        # 4: body
-        # 5: mouth
-        self.eyes = self.draw_eyes(
-            original_irises=VGroup(parts[0], parts[1]),  # Changed from parts[2], parts[6]
-            original_pupils=VGroup(parts[2], parts[3])   # Changed from parts[8], parts[9]
+        self.eyes: VGroup = self.draw_eyes(
+            original_irises=VGroup(parts[2], parts[6]),
+            original_pupils=VGroup(parts[8], parts[9])
         )
-        self.body = parts[4]  # Changed from parts[10]
-        self.mouth = parts[5] # Changed from parts[11]
+        self.body: VMobject = parts[10]
+        self.mouth: VMobject = parts[11]
         self.mouth.insert_n_curves(10)
         self.set_submobjects([self.eyes, self.body, self.mouth])
-
 
     def draw_eyes(self, original_irises, original_pupils):
         # Instead of what is drawn, make new circles.
