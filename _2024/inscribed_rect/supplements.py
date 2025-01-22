@@ -6,7 +6,7 @@ class UnsolvedQuestion(TeacherStudentsScene):
     def construct(self):
         # Test
         self.play(
-            self.teacher.says("Here is an\nunsolved problem", mode="tease"),
+            self.teacher.says("Ésta es una\npregunta sin solución", mode="tease"),
             self.change_students("pondering", "sassy", "pondering"),
         )
         self.look_at(self.screen)
