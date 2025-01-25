@@ -163,9 +163,13 @@ class StateThePuzzle(LoopScene):
         # print("finished")
 
 
+
         new_square_params = [[0.98, 0.4,  0.3 ,0.16],
-                             [0.85, 0.7,  0.39,0.05],]
-        
+                             [0.85, 0.7,  0.39,0.05],
+                             [0.85, 0.7,  0.39, 0.05],
+                             [0.5,  0.36, 0.97, 0.7 ]]
+        self.wait()
+            
         # Now animate through each set of square parameters
         for new_params in new_square_params:
             new_dots = dots.copy()
@@ -176,7 +180,8 @@ class StateThePuzzle(LoopScene):
             dots.set_opacity(0)
             self.play(Transform(dots, new_dots), run_time=0.7)
             dots.set_opacity(1)
-            self.wait(0.3)
+            self.wait(0.4)
+        self.wait()
 
         # Ask question
         title = TexText("Pregunta Abierta", font_size=60)
@@ -232,7 +237,7 @@ class StateThePuzzle(LoopScene):
                 run_time=1
             )
             self.add(dots, polygon)
-            for _ in range(1):
+            for _ in range(4):
                 quad_tracker.set_value(find_rectangle(loop_func, np.random.random(4), target_angle=90 * DEG))
                 self.wait(0.5)
 
@@ -327,7 +332,6 @@ class OnlySquare(LoopScene):
 
         self.add(polygon, loop)
         self.play(ShowCreation(polygon, suspend_mobject_updating=True))
-        self.wait()
 
         # Alternate squares
         dots.suspend_updating()
@@ -335,10 +339,8 @@ class OnlySquare(LoopScene):
 
         new_loops = [
             get_example_loop(1),
-            get_example_loop(4),
             Tex(R"\pi").family_members_with_points()[0],
             Tex(R"\epsilon").family_members_with_points()[0],
-            get_example_loop(4),
         ]
         og_loop = loop.copy()
         for new_loop in new_loops:
@@ -351,20 +353,21 @@ class OnlySquare(LoopScene):
         self.add(dots, polygon)
 
         rect_params = find_rectangle(loop_func, target_angle=90 * DEG)
-        self.wait()
 
 
         # Beware: Takes ~1h to render 
 
         # More ambient transitioning
         for new_loop in [og_loop, *new_loops[1:3]]:
-            print("Computing squares!")
             self.play(
                 Transform(loop, new_loop),
+
+                # <HEAVY animation>
                 UpdateFromFunc(
                     quad_tracker,
                     lambda m: m.set_value(true_find_square(loop_func, 90 * DEG))
                 ),
+                # </HEAVY animation>
                 run_time=5
             )
             self.wait()
